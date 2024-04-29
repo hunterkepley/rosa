@@ -19,13 +19,13 @@ var _ = Describe("Test describe machinepool options", func() {
 			// Set value then bind
 			testMachinepool := "test"
 			args.machinepool = testMachinepool
-			err := options.Bind(args)
+			err := options.Bind(&args)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(options.Machinepool()).To(Equal(testMachinepool))
 		})
 		It("Fail to bind args due to empty machinepool name", func() {
 			args.machinepool = ""
-			err := options.Bind(args)
+			err := options.Bind(&args)
 			Expect(err).To(HaveOccurred())
 			Expect(err.Error()).To(Equal("you need to specify a machine pool name"))
 		})

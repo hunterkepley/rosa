@@ -31,7 +31,7 @@ func (m *DescribeMachinepoolOptions) Machinepool() string {
 	return m.args.machinepool
 }
 
-func (m *DescribeMachinepoolOptions) Bind(args DescribeMachinepoolUserOptions) error {
+func (m *DescribeMachinepoolOptions) Bind(args *DescribeMachinepoolUserOptions) error {
 	if args.machinepool == "" {
 		return fmt.Errorf("you need to specify a machine pool name")
 	}
