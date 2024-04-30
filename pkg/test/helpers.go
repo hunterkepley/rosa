@@ -369,6 +369,7 @@ func (t *TestingRuntime) Close() {
 	ocm.SetClusterKey("")
 }
 
+// SetCluster sets the global cluster flag value, for use in cobra commands
 func (t *TestingRuntime) SetCluster(clusterKey string, cluster *v1.Cluster) {
 	ocm.SetClusterKey(clusterKey)
 	t.RosaRuntime.Cluster = cluster
