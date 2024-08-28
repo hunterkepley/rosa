@@ -1170,6 +1170,7 @@ func (c *awsClient) CreateS3Bucket(bucketName string, region string) error {
 		Bucket: aws.String(bucketName),
 		Policy: aws.String(fmt.Sprintf(ReadOnlyAnonUserPolicyTemplate, bucketName)),
 	})
+	fmt.Println(fmt.Sprintf("!!!!!: %s", bucketName))
 	if err != nil {
 		return err
 	}

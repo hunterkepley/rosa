@@ -488,6 +488,7 @@ func (s *CreateUnmanagedOidcConfigManualStrategy) execute(r *rosa.Runtime) strin
 
 	readOnlyPolicyFilename := fmt.Sprintf("readOnlyPolicy-%s.json", bucketName)
 	err = helper.SaveDocument(fmt.Sprintf(aws.ReadOnlyAnonUserPolicyTemplate, bucketName), readOnlyPolicyFilename)
+	fmt.Println(fmt.Sprintf("!!!!!: %s", bucketName))
 	if err != nil {
 		r.Reporter.Errorf("There was a problem saving bucket policy document to a file: %s", err)
 		os.Exit(1)
