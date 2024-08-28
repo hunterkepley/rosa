@@ -1136,6 +1136,7 @@ func (c *awsClient) CreateS3Bucket(bucketName string, region string) error {
 	_, err := c.s3Client.HeadBucket(context.TODO(), &s3.HeadBucketInput{
 		Bucket: aws.String(bucketName),
 	})
+	fmt.Println(fmt.Sprintf("!!!!!: %s", bucketName))
 	if err == nil {
 		return weberr.Errorf("Bucket '%s' already exists.", bucketName)
 	}
@@ -1170,7 +1171,6 @@ func (c *awsClient) CreateS3Bucket(bucketName string, region string) error {
 		Bucket: aws.String(bucketName),
 		Policy: aws.String(fmt.Sprintf(ReadOnlyAnonUserPolicyTemplate, bucketName)),
 	})
-	fmt.Println(fmt.Sprintf("!!!!!: %s", bucketName))
 	if err != nil {
 		return err
 	}
