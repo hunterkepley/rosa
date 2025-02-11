@@ -9,9 +9,9 @@ import (
 )
 
 const (
-	TransitIpv4    = "transit_ipv4"
-	JoinIpv4       = "join_ipv4"
-	MasqueradeIpv4 = "masquerade_ipv4"
+	TransitIpv4    = "transit"
+	JoinIpv4       = "join"
+	MasqueradeIpv4 = "masquerade"
 
 	SubnetConfigTransit    = "transit"
 	SubnetConfigMasquerade = "masquerade"
