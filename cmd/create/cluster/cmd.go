@@ -22,6 +22,7 @@ import (
 	"net"
 	"os"
 	"reflect"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -438,7 +439,6 @@ func initFlags(cmd *cobra.Command) {
 		ocm.DefaultChannelGroup,
 		"Channel group is the name of the group where this image belongs, for example \"stable\" or \"fast\".",
 	)
-	flags.MarkHidden("channel-group")
 
 	flags.StringVar(
 		&args.flavour,
@@ -1174,7 +1174,7 @@ func run(cmd *cobra.Command, _ []string) {
 
 	// Billing Account
 	billingAccount := args.billingAccount
-	if isHostedCP {
+	if isHostedCP && !fedramp.Enabled() {
 		isHcpBillingTechPreview, err := r.OCMClient.IsTechnologyPreview(ocm.HcpBillingAccount, time.Now())
 		if err != nil {
 			r.Reporter.Errorf("%s", err)
@@ -1257,6 +1257,12 @@ func run(cmd *cobra.Command, _ []string) {
 	if !isHostedCP && billingAccount != "" {
 		r.Reporter.Errorf("Billing accounts are only supported for Hosted Control Plane clusters")
 		os.Exit(1)
+	}
+
+	if isHostedCP && fedramp.Enabled() && billingAccount != "" {
+		r.Reporter.Warnf("Billing accounts when using Govcloud are associated with commercial accounts, " +
+			"using empty ID for billing account to create cluster")
+		billingAccount = ""
 	}
 
 	externalAuthProvidersEnabled := args.externalAuthProvidersEnabled
@@ -1444,6 +1450,8 @@ func run(cmd *cobra.Command, _ []string) {
 			os.Exit(1)
 		}
 
+		r.Reporter.Warnf("Account roles not created by ROSA CLI cannot be listed, updated, or upgraded.")
+
 		if len(roleARNs) > 1 {
 			defaultRoleARN := roleARNs[0]
 			// Prioritize roles with the default prefix
@@ -1493,13 +1501,18 @@ func run(cmd *cobra.Command, _ []string) {
 			if isHostedCP {
 				createAccountRolesCommand = createAccountRolesCommand + " " + hostedCPFlag
 			}
-			r.Reporter.Warnf(fmt.Sprintf("No compatible account roles with version '%s' found. "+
-				"You will need to manually set them in the next steps or run '%s' to create them first.",
-				minor, createAccountRolesCommand))
+			r.Reporter.Warnf("No suitable account with ROSA CLI-created account roles were found. "+
+				"You can manually set them in the next steps or run '%s' to create them first.", createAccountRolesCommand)
 			interactive.Enable()
 		}
 
 		if roleARN != "" {
+			// Check if role has red-hat-managed tag
+			hasTag := roles.CheckHasRedHatManagedTag(roleARN, awsClient)
+			if !hasTag {
+				r.Reporter.Warnf("The role '%s' is not a Red Hat managed role", roleARN)
+			}
+
 			// check if role has hosted cp policy via AWS tag value
 			hostedCPPolicies, err := awsClient.HasHostedCPPolicies(roleARN)
 			if err != nil {
@@ -1555,12 +1568,17 @@ func run(cmd *cobra.Command, _ []string) {
 					if isHostedCP {
 						createAccountRolesCommand = createAccountRolesCommand + " " + hostedCPFlag
 					}
-					r.Reporter.Warnf(fmt.Sprintf("No compatible '%s' account roles with version '%s' found. "+
-						"You will need to manually set them in the next steps or run '%s' to create them first.",
-						role.Name, minor, createAccountRolesCommand))
+					r.Reporter.Warnf("No suitable accounts with ROSA CLI-created account roles were found. "+
+						"You can manually set them in the next steps or run '%s' to create them first.", createAccountRolesCommand)
 					interactive.Enable()
 					hasRoles = false
 					break
+				}
+
+				// Check if role has red-hat-managed tag
+				hasTag := roles.CheckHasRedHatManagedTag(selectedARN, awsClient)
+				if !hasTag {
+					r.Reporter.Warnf("The role '%s' is not a Red Hat managed role", selectedARN)
 				}
 				if !output.HasFlag() || r.Reporter.IsTerminal() {
 					r.Reporter.Infof("Using %s for the %s role", selectedARN, role.Name)
@@ -2205,9 +2223,12 @@ func run(cmd *cobra.Command, _ []string) {
 			r.Reporter.Errorf("%s", filterError)
 			os.Exit(1)
 		}
+
+		var excludedPublicSubnets []string
 		if privateLink {
-			subnets = filterPrivateSubnets(subnets, r)
+			subnets, excludedPublicSubnets = filterPrivateSubnets(subnets, r)
 		}
+
 		if len(subnets) == 0 {
 			r.Reporter.Warnf("No subnets found in current region that are valid for the chosen CIDR ranges")
 			if isHostedCP {
@@ -2230,13 +2251,17 @@ func run(cmd *cobra.Command, _ []string) {
 		// Verify subnets provided exist.
 		if subnetsProvided {
 			for _, subnetArg := range subnetIDs {
-				verifiedSubnet := false
-				for _, subnet := range subnets {
-					if awssdk.ToString(subnet.SubnetId) == subnetArg {
-						verifiedSubnet = true
-					}
+				// Check if subnet is in the excluded list of public subnets
+				if slices.Contains(excludedPublicSubnets, subnetArg) {
+					r.Reporter.Errorf("Cluster is set as private, cannot use public '%s'",
+						subnetArg)
+					os.Exit(1)
 				}
-				if !verifiedSubnet {
+
+				// Check if the provided subnet exists in the filtered list
+				if !slices.ContainsFunc(subnets, func(subnet ec2types.Subnet) bool {
+					return awssdk.ToString(subnet.SubnetId) == subnetArg
+				}) {
 					r.Reporter.Errorf("Could not find the following subnet provided in region '%s': %s",
 						r.AWSClient.GetRegion(), subnetArg)
 					os.Exit(1)
@@ -2821,12 +2846,8 @@ func run(cmd *cobra.Command, _ []string) {
 		}
 	}
 
-	if cmd.Flags().Changed("fips") && isHostedCP {
-		r.Reporter.Errorf("FIPS support not available for Hosted Control Plane clusters")
-		os.Exit(1)
-	}
 	fips := args.fips || fedramp.Enabled()
-	if interactive.Enabled() && !fedramp.Enabled() && !isHostedCP {
+	if interactive.Enabled() {
 		fips, err = interactive.GetBool(interactive.Input{
 			Question: "Enable FIPS support",
 			Help:     cmd.Flags().Lookup("fips").Usage,
@@ -3696,8 +3717,8 @@ func handleOidcConfigOptions(r *rosa.Runtime, cmd *cobra.Command, isSTS bool, is
 	return oidcConfig
 }
 
-func filterPrivateSubnets(initialSubnets []ec2types.Subnet, r *rosa.Runtime) []ec2types.Subnet {
-	excludedSubnetsDueToPublic := []string{}
+func filterPrivateSubnets(initialSubnets []ec2types.Subnet, r *rosa.Runtime) ([]ec2types.Subnet, []string) {
+	excludedPublicSubnets := []string{}
 	filteredSubnets := []ec2types.Subnet{}
 	publicSubnetMap, err := r.AWSClient.FetchPublicSubnetMap(initialSubnets)
 	if err != nil {
@@ -3708,8 +3729,8 @@ func filterPrivateSubnets(initialSubnets []ec2types.Subnet, r *rosa.Runtime) []e
 		skip := false
 		if isPublic, ok := publicSubnetMap[awssdk.ToString(subnet.SubnetId)]; ok {
 			if isPublic {
-				excludedSubnetsDueToPublic = append(
-					excludedSubnetsDueToPublic,
+				excludedPublicSubnets = append(
+					excludedPublicSubnets,
 					awssdk.ToString(subnet.SubnetId),
 				)
 				skip = true
@@ -3719,12 +3740,12 @@ func filterPrivateSubnets(initialSubnets []ec2types.Subnet, r *rosa.Runtime) []e
 			filteredSubnets = append(filteredSubnets, subnet)
 		}
 	}
-	if len(excludedSubnetsDueToPublic) > 0 {
+	if len(excludedPublicSubnets) > 0 {
 		r.Reporter.Warnf("The following subnets have been excluded"+
 			" because they have an Internet Gateway Targetded Route and the Cluster choice is private: %s",
-			helper.SliceToSortedString(excludedSubnetsDueToPublic))
+			helper.SliceToSortedString(excludedPublicSubnets))
 	}
-	return filteredSubnets
+	return filteredSubnets, excludedPublicSubnets
 }
 
 // filterCidrRangeSubnets filters the initial set of subnets to those that are part of the machine network,
