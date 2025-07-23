@@ -98,7 +98,8 @@ const (
 	hcpInternalCommunicationHostedZoneIdFlag = "hcp-internal-communication-hosted-zone-id"
 	ingressPrivateHostedZoneIdFlag           = "ingress-private-hosted-zone-id"
 
-	billingAccountFlag  = "billing-account"
+	billingAccountFlag = "billing-account"
+
 	privateLinkFlagName = "private-link"
 	privateFlagName     = "private"
 )
