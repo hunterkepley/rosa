@@ -245,16 +245,19 @@ func (c *awsClient) ListOidcProviders(targetClusterId string, config *cmv1.OidcC
 				switch *tag.Key {
 				case tags.ClusterID:
 					clusterId = *tag.Value
-				case "rosa-cluster-id":
-					clusterId = *tag.Value
 				case tags.RedHatManaged:
 					skip = false
 				}
 			}
+			fmt.Printf("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!: cluster ID is %s\n", clusterId)
+			fmt.Printf("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!: RHManaged is %b\n", tags.RedHatManaged)
 			if targetClusterId != "" {
+				fmt.Printf("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!: Target cluster ID is %s\n", targetClusterId)
 				if targetClusterId != clusterId {
+					fmt.Printf("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!: Skipped")
 					skip = true
 				} else {
+					fmt.Printf("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!: Worked")
 					providers = append(providers, OidcProviderOutput{
 						Arn:       *provider.Arn,
 						ClusterId: clusterId,
