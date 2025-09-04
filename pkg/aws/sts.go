@@ -245,6 +245,8 @@ func (c *awsClient) ListOidcProviders(targetClusterId string, config *cmv1.OidcC
 				switch *tag.Key {
 				case tags.ClusterID:
 					clusterId = *tag.Value
+				case "rosa-cluster-id":
+					clusterId = *tag.Value
 				case tags.RedHatManaged:
 					skip = false
 				}
