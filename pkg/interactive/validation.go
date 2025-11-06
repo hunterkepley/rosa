@@ -76,10 +76,10 @@ func IsValidHostname(val interface{}) error {
 		return nil
 	}
 	if hostname == "github.com" || strings.HasSuffix(hostname, ".github.com") {
-		return fmt.Errorf("%v", fmt.Sprintf("'%s' hostname cannot be equal to [*.]github.com", hostname))
+		return fmt.Errorf(fmt.Sprintf("'%s' hostname cannot be equal to [*.]github.com", hostname))
 	}
 	if !(len(validation.IsDNS1123Subdomain(hostname)) == 0 || netutils.ParseIPSloppy(hostname) != nil) {
-		return fmt.Errorf("%v", fmt.Sprintf("'%s' hostname must be a valid DNS subdomain or IP address", hostname))
+		return fmt.Errorf(fmt.Sprintf("'%s' hostname must be a valid DNS subdomain or IP address", hostname))
 	}
 	return nil
 }

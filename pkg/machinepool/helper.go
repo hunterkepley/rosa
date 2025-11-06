@@ -89,7 +89,7 @@ func getSubnetFromUser(cmd *cobra.Command, r *rosa.Runtime, isSubnetSet bool,
 			Required: false,
 		})
 		if err != nil {
-			return "", fmt.Errorf("%s", questionError)
+			return "", fmt.Errorf(questionError)
 		}
 	} else {
 		subnet = args.Subnet
