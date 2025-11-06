@@ -44,7 +44,7 @@ func GetAddonArgument(param asv1.AddonParameter, dflt string) (string, error) {
 				}
 				if isValid, err := regexp.MatchString(param.Validation(), strAns); err != nil || !isValid {
 					if param.ValidationErrMsg() != "" {
-						return fmt.Errorf(param.ValidationErrMsg())
+						return fmt.Errorf("%s", param.ValidationErrMsg())
 					}
 					return fmt.Errorf("expected %q to match /%s/", strAns, param.Validation())
 				}

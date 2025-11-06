@@ -287,7 +287,7 @@ func upgradeAccountRolePolicies(reporter reporter.Logger, awsClient aws.Client, 
 		if isVersionChosen {
 			promptString = fmt.Sprintf("Upgrade the '%s' role policy to version '%s' ?", roleName, policyVersion)
 		}
-		if !confirm.Prompt(true, promptString) {
+		if !confirm.Prompt(true, "%s", promptString) {
 			continue
 		}
 		filename := fmt.Sprintf("sts_%s_permission_policy", file)

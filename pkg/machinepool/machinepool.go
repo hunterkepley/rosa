@@ -291,7 +291,7 @@ func (m *machinePool) CreateMachinePool(r *rosa.Runtime, cmd *cobra.Command, clu
 		cluster.AWS().STS().ExternalID(),
 	)
 	if err != nil {
-		return fmt.Errorf(fmt.Sprintf("%s", err))
+		return fmt.Errorf("%s", err.Error())
 	}
 
 	if spin != nil {
@@ -677,7 +677,7 @@ func (m *machinePool) CreateNodePools(r *rosa.Runtime, cmd *cobra.Command, clust
 	if subnet != "" {
 		availabilityZone, err := r.AWSClient.GetSubnetAvailabilityZone(subnet)
 		if err != nil {
-			return fmt.Errorf(fmt.Sprintf("%s", err))
+			return fmt.Errorf("%s", err)
 		}
 		availabilityZonesFilter = []string{availabilityZone}
 	}
@@ -685,7 +685,7 @@ func (m *machinePool) CreateNodePools(r *rosa.Runtime, cmd *cobra.Command, clust
 	instanceTypeList, err := r.OCMClient.GetAvailableMachineTypesInRegion(cluster.Region().ID(),
 		availabilityZonesFilter, cluster.AWS().STS().RoleARN(), r.AWSClient, cluster.AWS().STS().ExternalID())
 	if err != nil {
-		return fmt.Errorf(fmt.Sprintf("%s", err))
+		return fmt.Errorf("%s", err)
 	}
 
 	if spin != nil {
@@ -820,7 +820,7 @@ func (m *machinePool) CreateNodePools(r *rosa.Runtime, cmd *cobra.Command, clust
 
 		err = ValidateKubeletConfig(inputKubeletConfigs)
 		if err != nil {
-			return fmt.Errorf(err.Error())
+			return fmt.Errorf("%s", err.Error())
 		}
 
 		if len(inputKubeletConfigs) != 0 {
@@ -929,7 +929,7 @@ func (m *machinePool) CreateNodePools(r *rosa.Runtime, cmd *cobra.Command, clust
 	if nodeDrainGracePeriod != "" {
 		nodeDrainBuilder, err := machinepools.CreateNodeDrainGracePeriodBuilder(nodeDrainGracePeriod)
 		if err != nil {
-			return fmt.Errorf(err.Error())
+			return fmt.Errorf("%s", err.Error())
 		}
 		npBuilder.NodeDrainGracePeriod(nodeDrainBuilder)
 	}
@@ -1831,7 +1831,7 @@ func editNodePool(cmd *cobra.Command, nodePoolID string,
 		}
 		err = ValidateKubeletConfig(inputKubeletConfig)
 		if err != nil {
-			r.Reporter.Errorf(err.Error())
+			r.Reporter.Errorf("%s", err.Error())
 			os.Exit(1)
 		}
 		npBuilder.KubeletConfigs(inputKubeletConfig...)
@@ -1863,7 +1863,7 @@ func editNodePool(cmd *cobra.Command, nodePoolID string,
 		if nodeDrainGracePeriod != "" {
 			nodeDrainBuilder, err := mpHelpers.CreateNodeDrainGracePeriodBuilder(nodeDrainGracePeriod)
 			if err != nil {
-				return fmt.Errorf(err.Error())
+				return fmt.Errorf("%s", err.Error())
 			}
 			npBuilder.NodeDrainGracePeriod(nodeDrainBuilder)
 		}

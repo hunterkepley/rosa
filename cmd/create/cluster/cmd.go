@@ -3703,7 +3703,7 @@ func validateNetworkType(networkType string) error {
 		return nil
 	}
 	if !helper.Contains(ocm.NetworkTypes, networkType) {
-		return fmt.Errorf(fmt.Sprintf("Expected a valid network type. Valid values: %v", ocm.NetworkTypes))
+		return fmt.Errorf("%s", fmt.Sprintf("Expected a valid network type. Valid values: %v", ocm.NetworkTypes))
 	}
 	return nil
 }

@@ -186,7 +186,7 @@ func run(cmd *cobra.Command, argv []string) {
 		if clusterKey != "" {
 			confirmPromptMessage = fmt.Sprintf("Create the OIDC provider for cluster '%s'?", clusterKey)
 		}
-		if !confirm.Prompt(true, confirmPromptMessage) {
+		if !confirm.Prompt(true, "%s", confirmPromptMessage) {
 			os.Exit(0)
 		}
 		if clusterId == "" && clusterKey != "" {
