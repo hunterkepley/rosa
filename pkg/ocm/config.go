@@ -99,7 +99,7 @@ func GetEnv() (string, error) {
 	if strings.HasSuffix(strings.TrimSuffix(cfg.URL, "/"), "openshift.com") {
 		regionDiscoveryUrl, err := sdk.DetermineRegionDiscoveryUrl(cfg.URL)
 		if err == nil {
-			fmt.Println("ROSA CLI did not find an issue with determining the region discovery URL")
+			fmt.Println("!@!: ROSA CLI did not find an issue with determining the region discovery URL")
 			discoveryGatewayUrl, _ := url.Parse(regionDiscoveryUrl)
 			// Check for URL aliases
 			for env, api := range urlAliases {
@@ -114,7 +114,7 @@ func GetEnv() (string, error) {
 	// URL check as a fallback mechanism (in case of other URLs like local envs, fedRAMP envs, etc.)
 	for env, api := range urlAliases {
 		if api == strings.TrimSuffix(cfg.URL, "/") {
-			fmt.Printf("ROSA CLI trimmed a URL: %s\n", api)
+			fmt.Printf("!@!: ROSA CLI trimmed a URL: %s\n", api)
 			return env, nil
 		}
 	}
@@ -122,7 +122,7 @@ func GetEnv() (string, error) {
 	// Special use case for Admin users in the GovCloud environment
 	for env, api := range fedramp.AdminURLAliases {
 		if api == strings.TrimSuffix(cfg.URL, "/") {
-			fmt.Printf("ROSA CLI determined an admin user was using a URL: %s\n", api)
+			fmt.Printf("!@!: ROSA CLI determined an admin user was using a URL: %s\n", api)
 			return env, nil
 		}
 	}
