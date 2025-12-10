@@ -103,10 +103,13 @@ func GetAllowedConfigProperties() []string {
 
 // Loads the configuration from the OS keyring if requested, load from the configuration file if not
 func Load() (cfg *Config, err error) {
+	fmt.Println("!@!: Entered config load")
 	if keyring, ok := IsKeyringManaged(); ok {
+		fmt.Println("!@!: Managed keyring")
 		return loadFromOS(keyring)
 	}
 
+	fmt.Println("!@!: Load from file")
 	return loadFromFile()
 }
 
@@ -126,10 +129,12 @@ func loadFromOS(keyring string) (cfg *Config, err error) {
 	}
 	// No config found, return
 	if len(data) == 0 {
+		fmt.Println("!@!: No config found - OS")
 		return nil, nil
 	}
 	err = json.Unmarshal(data, cfg)
 	if err != nil {
+		fmt.Println("!@!: Unable to unmarshal config - OS")
 		// Treat the config as empty if it can't be unmarshalled, it is invalid
 		return nil, nil
 	}
@@ -145,6 +150,7 @@ func loadFromFile() (cfg *Config, err error) {
 	}
 	_, err = os.Stat(file)
 	if os.IsNotExist(err) {
+		fmt.Println("!@!: Does not exist - File")
 		cfg = nil
 		err = nil
 		return
